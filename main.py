@@ -21,11 +21,10 @@ if __name__ == "__main__":
 
 
     while True:
-        print("LEN REVIEWS URL: ", len(adThread.reviews_url))
     # for i in range(10):
 
         if pages:
-            print("\n\nLEN PAGES: ", len(pages))
+            print("LEN PAGES: ", len(pages))
             page = pages.pop()
             products_thread = Th.AdidasThread(
                 t_id=page,
@@ -34,7 +33,9 @@ if __name__ == "__main__":
                 t_page=page
             )
             products_thread.start()
-            time.sleep(0.6)
+            threads.append(products_thread)
+            time.sleep(0.5)
+
             for _ in range(4):
                 set_review_thread = Th.AdidasThread(
                     t_id=page,
@@ -43,25 +44,21 @@ if __name__ == "__main__":
                     t_page=page
                 )
                 set_review_thread.start()
-                # set_review_thread.join()
-                print("LEN REVIEWS URL: ", len(adThread.reviews_url))
-                # print(adThread.reviews_url)
-                
+                threads.append(set_review_thread)
 
             if len(adThread.reviews_url) > 1:
-                for i in range(16):
+                for i in range(8):
                     get_reviews_thread = Th.AdidasThread(
                         t_id=i,
                         t_type=Th.TYPES.GET_REVIEW,
                         t_url="",
                         t_page=""
                     )
-                    print("GETTING REVIEWS: ", get_reviews_thread)
                     get_reviews_thread.start()
-                    # get_reviews_thread.join()
-                    time.sleep(0.2)
+                    threads.append(get_reviews_thread)
+                    time.sleep(0.1)
 
-                time.sleep(0.2)
+                time.sleep(0.5)
                 save_reviews_thread = Th.AdidasThread(
                     t_id=i+5,
                     t_type=Th.TYPES.SAVE_REVIEW,
@@ -69,14 +66,15 @@ if __name__ == "__main__":
                     t_page=""
                 )
                 save_reviews_thread.start() 
+                threads.append(save_reviews_thread)
+                print("SAVING REVIEWS: ", save_reviews_thread)
+                print("\n\n\n")
                 # save_reviews_thread.join() 
 
-                          
-        
         else:
             time.sleep(2)
 
-            # for thread in threads:
-            #     thread.join()
+            for thread in threads:
+                thread.join()
             print("DONE")
             break

@@ -18,9 +18,8 @@ class AdidasThread(threading.Thread):
     t_type: TYPES = TYPES.NONE
     t_url: str = ""
     t_page: int = 0
-
     t_products: list = []
-    t_products_counter: int = 0
+
     pages: list = []
     products: list = []
     reviews_url: list = []
@@ -106,10 +105,8 @@ class AdidasThread(threading.Thread):
         response = self.request_url(params=params)
         if response is None:
             return
-        response_json = response.json()
-
         try:
-            self.t_products.append(response_json["raw"]["itemList"]["items"])
+            self.t_products.append(response.json()["raw"]["itemList"]["items"])
         except KeyError:
             return
 
@@ -117,14 +114,26 @@ class AdidasThread(threading.Thread):
             return self.get_products()
 
         
-        print("COUNTER: ", AdidasThread.t_products_counter)
+
         AdidasThread.products.extend(AdidasThread.t_products)
-        if AdidasThread.t_products_counter == 9:
-            AdidasThread.save_data(AdidasThread.t_products, file_name=f"products{self.t_page}.json")
-            AdidasThread.t_products_counter = 0
-            AdidasThread.t_products = []
-        else:
-            AdidasThread.t_products_counter += 1
+        if len(AdidasThread.t_products) == 10:
+            t_products_to_save = [AdidasThread.t_products.pop() for _ in range(10) if len(AdidasThread.t_products) > 0] 
+            AdidasThread.save_data(t_products_to_save, file_name=f"products{self.t_page}.json")           
+
+        # if self.t_page >= 10:
+
+        #     if len(AdidasThread.t_products) == 10:
+        #         t_products_to_save = [AdidasThread.t_products.pop() for _ in range(10) if len(AdidasThread.t_products) > 0] 
+        #         AdidasThread.save_data(t_products_to_save, file_name=f"products{self.t_page}.json")   
+
+        # else:
+        #     if len(AdidasThread.t_products) == (10 - self.t_page):
+        #         t_products_to_save = [AdidasThread.t_products.pop() for _ in range(10 - self.t_page) if len(AdidasThread.t_products) > 0] 
+        #         AdidasThread.save_data(AdidasThread.t_products, file_name=f"products{self.t_page}.json")
+
+
+     
+
 
 
     def generate_offsets(offset_total, limit):
@@ -167,12 +176,6 @@ class AdidasThread(threading.Thread):
 
 
     def get_reviews(self):
-        # response = self.request_url()
-        # if response is None:
-        #     return
-        # reviews = {"productId": self.t_page, "page_reviews":  response.json()}
-
-        # AdidasThread.product_reviews.append(reviews)
         if len(AdidasThread.reviews_url) > 1:
             review_data = AdidasThread.reviews_url.pop()
             for offset in review_data[1]:
@@ -180,10 +183,11 @@ class AdidasThread(threading.Thread):
                 print(url)
                 response = requests.get(url, headers=AdidasThread.headers)
                 if response is None:
-                    return
+                    # return
+                    continue
                 reviews = {"productId": review_data[2], "page_reviews":  response.json()}
-
                 AdidasThread.product_reviews.append(reviews)        
+    
     
     def save_reviews(self):
         reviews = AdidasThread.product_reviews
@@ -208,4 +212,3 @@ class AdidasThread(threading.Thread):
         elif self.t_type == TYPES.SAVE_REVIEW:
             self.save_reviews()
             # pass
-
